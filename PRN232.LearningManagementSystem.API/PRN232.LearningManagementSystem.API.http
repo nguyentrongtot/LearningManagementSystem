@@ -1,0 +1,6 @@
+@PRN232.LearningManagementSystem.API_HostAddress = http://localhost:5298
+
+GET {{PRN232.LearningManagementSystem.API_HostAddress}}/weatherforecast/
+Accept: application/json
+
+###
