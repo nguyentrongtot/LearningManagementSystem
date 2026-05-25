@@ -1,4 +1,12 @@
 
+using Microsoft.EntityFrameworkCore;
+using System.Reflection;
+using PRN232.LMS.Repositories.Data;
+using PRN232.LMS.Repositories.Implementations;
+using PRN232.LMS.Repositories.Interfaces;
+using PRN232.LMS.Services.Implementations;
+using PRN232.LMS.Services.Interfaces;
+
 namespace PRN232.LMS.API
 {
     public class Program
@@ -12,9 +20,32 @@ namespace PRN232.LMS.API
             builder.Services.AddControllers();
             // Learn more about configuring Swagger/OpenAPI at https://aka.ms/aspnetcore/swashbuckle
             builder.Services.AddEndpointsApiExplorer();
-            builder.Services.AddSwaggerGen();
+            builder.Services.AddSwaggerGen(options =>
+            {
+                var xmlFilename = $"{Assembly.GetExecutingAssembly().GetName().Name}.xml";
+                options.IncludeXmlComments(Path.Combine(AppContext.BaseDirectory, xmlFilename));
+            });
 
+            builder.Services.AddScoped<IStudentRepository, StudentRepository>();
+            builder.Services.AddScoped<IStudentService, StudentService>();
+            
+            builder.Services.AddScoped<ICourseRepository, CourseRepository>();
+            builder.Services.AddScoped<ICourseService, CourseService>();
+            
+            builder.Services.AddScoped<ISemesterRepository, SemesterRepository>();
+            builder.Services.AddScoped<ISemesterService, SemesterService>();
+            
+            builder.Services.AddScoped<ISubjectRepository, SubjectRepository>();
+            builder.Services.AddScoped<ISubjectService, SubjectService>();
+            
+            builder.Services.AddScoped<IEnrollmentRepository, EnrollmentRepository>();
+            builder.Services.AddScoped<IEnrollmentService, EnrollmentService>();
+
+            builder.Services.AddDbContext<LmsDbContext>(options =>
+                options.UseSqlServer(builder.Configuration.GetConnectionString("DefaultConnection")));
             var app = builder.Build();
+
+           
 
             // Configure the HTTP request pipeline.
             if (app.Environment.IsDevelopment())
@@ -23,13 +54,15 @@ namespace PRN232.LMS.API
                 app.UseSwaggerUI();
             }
 
-            app.UseHttpsRedirection();
+            // Bỏ UseHttpsRedirection khi chạy Docker (container chỉ chạy HTTP, không có cert)
+            // app.UseHttpsRedirection();
 
             app.UseAuthorization();
 
 
             app.MapControllers();
 
+            
             app.Run();
         }
     }
