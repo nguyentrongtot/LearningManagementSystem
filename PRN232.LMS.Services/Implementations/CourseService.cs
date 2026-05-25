@@ -38,10 +38,18 @@ namespace PRN232.LMS.Services.Implementations
                 }
             }
 
-            bool includeRelations = !string.IsNullOrWhiteSpace(expand) && 
-                (expand.Contains("semester", StringComparison.OrdinalIgnoreCase) || expand.Contains("subject", StringComparison.OrdinalIgnoreCase));
+            //bool includeRelations = !string.IsNullOrWhiteSpace(expand) && 
+            //    (expand.Contains("semester", StringComparison.OrdinalIgnoreCase) || expand.Contains("subject", StringComparison.OrdinalIgnoreCase));
 
-            var courses = await _courseRepository.GetAllAsync(search, sortParams, page, size, includeRelations);
+            var expandFields = expand?
+            .Split(',', StringSplitOptions.RemoveEmptyEntries | StringSplitOptions.TrimEntries)
+            .Select(x => x.ToLowerInvariant())
+            .ToHashSet() ?? new HashSet<string>();
+
+            bool includeSemester = expandFields.Contains("semester");
+            bool includeSubject = expandFields.Contains("subject");
+
+            var courses = await _courseRepository.GetAllAsync(search, sortParams, page, size, includeSemester,includeSubject);
             
             var dtos = courses.Items.Select(c => new CourseDTO
             {
@@ -49,14 +57,14 @@ namespace PRN232.LMS.Services.Implementations
                 CourseName = c.CourseName,
                 SemesterId = c.SemesterId,
                 SubjectId = c.SubjectId,
-                SemesterDTO = c.Semester == null ? null : new SemesterDTO
+                SemesterDTO =!includeSemester ? null : new SemesterDTO
                 {
                     SemesterId = c.Semester.SemesterId,
                     SemesterName = c.Semester.SemesterName,
                     StartDate = c.Semester.StartDate,
                     EndDate = c.Semester.EndDate
                 },
-                SubjectDTO = c.Subject == null ? null : new SubjectDTO
+                SubjectDTO = !includeSubject ? null : new SubjectDTO
                 {   
                     SubjectId = c.Subject.SubjectId,
                     SubjectCode = c.Subject.SubjectCode,
