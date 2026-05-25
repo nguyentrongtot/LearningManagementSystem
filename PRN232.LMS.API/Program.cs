@@ -54,8 +54,6 @@ namespace PRN232.LMS.API
                 app.UseSwaggerUI();
             }
 
-            // Bỏ UseHttpsRedirection khi chạy Docker (container chỉ chạy HTTP, không có cert)
-            // app.UseHttpsRedirection();
 
             app.UseAuthorization();
 
