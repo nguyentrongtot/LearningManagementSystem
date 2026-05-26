@@ -10,13 +10,14 @@ namespace PRN232.LMS.Services.Models
     {
         public int EnrollmentId { get; set; }
 
-        //public int StudentId { get; set; }
+        public int StudentId { get; set; }
 
         public int CourseId { get; set; }
 
         public DateTime EnrollDate { get; set; }
 
         public string Status { get; set; } = null!;
-        public  CourseDTO CourseDTO { get; set; } = new CourseDTO();
+        public  CourseDTO? CourseDTO { get; set; } = new CourseDTO();
+        public StudentDTO? StudentDTO { get; set; } = new StudentDTO();
     }
 }
