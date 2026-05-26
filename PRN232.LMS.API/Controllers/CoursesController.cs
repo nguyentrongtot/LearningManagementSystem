@@ -215,5 +215,51 @@ namespace PRN232.LMS.API.Controllers
                 });
             }
         }
+
+        // 2. ENDPOINT MỚI: GET /api/courses/{id}/enrollments
+        [HttpGet("{id}/enrollments")]
+        [ProducesResponseType(typeof(ApiResponse<IEnumerable<EnrollmentResponse>>), StatusCodes.Status200OK)]
+        [ProducesResponseType(typeof(ApiErrorResponse), StatusCodes.Status404NotFound)]
+        public async Task<IActionResult> GetEnrollmentsByCourse(int id, [FromQuery] string? expand = null)
+        {
+            // Bước A: Kiểm tra xem Khóa học (Course) này có tồn tại không trước khi lấy Enrollments
+            var course = await _courseService.GetCourseByIdAsync(id);
+            if (course == null)
+            {
+                return NotFound(new ApiErrorResponse
+                {
+                    Success = false,
+                    Message = $"Course with ID {id} not found.",
+                    Errors = new List<string> { $"Cannot retrieve enrollments because course ID {id} does not exist." }
+                });
+            }
+
+            // Bước B: Gọi Service lấy danh sách DTOs
+            var enrollmentDtos = await _courseService.GetEnrollmentsByCourseAsync(id, expand);
+
+            // Bước C: Mapping từ DTO sang Response hiển thị
+            var responseData = enrollmentDtos.Select(e => new EnrollmentResponse
+            {
+                EnrollmentId = e.EnrollmentId,
+                StudentId = e.StudentId,
+                CourseId = id,
+                EnrollDate = e.EnrollDate,
+                Status = e.Status,
+                Student = e.StudentDTO == null ? null : new StudentResponse
+                {
+                    StudentId = e.StudentDTO.StudentId,
+                    FullName = e.StudentDTO.FullName,
+                    Email = e.StudentDTO.Email
+                }
+            }).ToList();
+
+            // Bước D: Trả dữ liệu về Client theo format chuẩn
+            return Ok(new ApiResponse<IEnumerable<EnrollmentResponse>>
+            {
+                Success = true,
+                Message = $"Enrollments for course ID {id} retrieved successfully.",
+                Data = responseData
+            });
+        }
     }
 }

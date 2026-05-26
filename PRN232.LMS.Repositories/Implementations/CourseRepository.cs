@@ -26,7 +26,7 @@ namespace PRN232.LMS.Repositories.Implementations
             {
                 query = query.Include(c => c.Semester);
             }
-            if (includeSemester)
+            if (includeSubject)
             {
                 query = query.Include(c => c.Subject);
             }
@@ -65,15 +65,14 @@ namespace PRN232.LMS.Repositories.Implementations
             return new PagedResult<Course>(items, page.Value, size.Value, totalCount);
         }
 
-        public async Task<Course?> GetByIdAsync(int id, bool includeRelations)
+        public async Task<Course?> GetByIdAsync(int id)
         {
             var query = _context.Courses.AsQueryable();
-            if (includeRelations)
-            {
-                query = query.Include(c => c.Semester).Include(c => c.Subject);
-            }
+            query = query.Include(c => c.Semester).Include(c => c.Subject);
             return await query.FirstOrDefaultAsync(c => c.CourseId == id);
         }
+
+       
 
         public async Task<Course> CreateAsync(Course course)
         {
@@ -110,5 +109,19 @@ namespace PRN232.LMS.Repositories.Implementations
         {
             return await _context.Courses.AnyAsync(c => c.SubjectId == subjectId);
         }
+
+        public async Task<IEnumerable<Enrollment>> GetEnrollmentsByCourseIdAsync(int courseId, bool includeStudent)
+        {
+            var query = _context.Enrollments.Where(e => e.CourseId == courseId);
+
+            if (includeStudent)
+            {
+                query = query.Include(e => e.Student);
+            }
+
+            return await query.ToListAsync();
+        }
+
+
     }
 }

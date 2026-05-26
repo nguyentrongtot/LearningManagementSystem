@@ -18,5 +18,6 @@ namespace PRN232.LMS.Services.Interfaces
         Task<CourseDTO> CreateCourseAsync(CourseCreateRequest createRequest);
         Task<CourseDTO> UpdateCourseAsync(int id, CourseUpdateRequest updateRequest);
         Task<bool> DeleteCourseAsync(int id);
+        Task<IEnumerable<EnrollmentDTO>> GetEnrollmentsByCourseAsync(int courseId, string? expand);
     }
 }

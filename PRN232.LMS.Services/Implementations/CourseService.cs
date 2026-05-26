@@ -49,15 +49,15 @@ namespace PRN232.LMS.Services.Implementations
             bool includeSemester = expandFields.Contains("semester");
             bool includeSubject = expandFields.Contains("subject");
 
-            var courses = await _courseRepository.GetAllAsync(search, sortParams, page, size, includeSemester,includeSubject);
-            
+            var courses = await _courseRepository.GetAllAsync(search, sortParams, page, size, includeSemester, includeSubject);
+
             var dtos = courses.Items.Select(c => new CourseDTO
             {
                 CourseId = c.CourseId,
                 CourseName = c.CourseName,
                 SemesterId = c.SemesterId,
                 SubjectId = c.SubjectId,
-                SemesterDTO =!includeSemester ? null : new SemesterDTO
+                SemesterDTO = !includeSemester ? null : new SemesterDTO
                 {
                     SemesterId = c.Semester.SemesterId,
                     SemesterName = c.Semester.SemesterName,
@@ -65,7 +65,7 @@ namespace PRN232.LMS.Services.Implementations
                     EndDate = c.Semester.EndDate
                 },
                 SubjectDTO = !includeSubject ? null : new SubjectDTO
-                {   
+                {
                     SubjectId = c.Subject.SubjectId,
                     SubjectCode = c.Subject.SubjectCode,
                     SubjectName = c.Subject.SubjectName,
@@ -78,33 +78,6 @@ namespace PRN232.LMS.Services.Implementations
             return new PagedResult<ExpandoObject>(shaped, courses.Page, courses.PageSize, courses.TotalItems);
         }
 
-        public async Task<CourseDTO?> GetCourseByIdAsync(int id)
-        {
-            var course = await _courseRepository.GetByIdAsync(id, true);
-            if (course == null) return null;
-
-            return new CourseDTO
-            {
-                CourseId = course.CourseId,
-                CourseName = course.CourseName,
-                SemesterId = course.SemesterId,
-                SubjectId = course.SubjectId,
-                SemesterDTO = course.Semester == null ? null : new SemesterDTO
-                {
-                    SemesterId = course.Semester.SemesterId,
-                    SemesterName = course.Semester.SemesterName,
-                    StartDate = course.Semester.StartDate,
-                    EndDate = course.Semester.EndDate
-                },
-                SubjectDTO = course.Subject == null ? null : new SubjectDTO
-                {
-                    SubjectId = course.Subject.SubjectId,
-                    SubjectCode = course.Subject.SubjectCode,
-                    SubjectName = course.Subject.SubjectName,
-                    Credit = course.Subject.Credit
-                }
-            };
-        }
 
         public async Task<CourseDTO> CreateCourseAsync(CourseCreateRequest createRequest)
         {
@@ -127,7 +100,7 @@ namespace PRN232.LMS.Services.Implementations
 
         public async Task<CourseDTO> UpdateCourseAsync(int id, CourseUpdateRequest updateRequest)
         {
-            var entity = await _courseRepository.GetByIdAsync(id, false);
+            var entity = await _courseRepository.GetByIdAsync(id);
             if (entity == null) throw new KeyNotFoundException($"Course ID {id} not found.");
 
             entity.CourseName = updateRequest.CourseName;
@@ -152,6 +125,65 @@ namespace PRN232.LMS.Services.Implementations
                 throw new InvalidOperationException($"Không thể xóa khóa học với ID {id} vì khóa học này đã có sinh viên đăng ký (Enrollments).");
             }
             return await _courseRepository.DeleteAsync(id);
+        }
+
+        public async Task<CourseDTO?> GetCourseByIdAsync(int id)
+        {
+            var course = await _courseRepository.GetByIdAsync(id);
+            if (course == null) return null;
+
+            return new CourseDTO
+            {
+                CourseId = course.CourseId,
+                CourseName = course.CourseName,
+                SemesterId = course.SemesterId,
+                SubjectId = course.SubjectId,
+                SemesterDTO = course.Semester == null ? null : new SemesterDTO
+                {
+                    SemesterId = course.Semester.SemesterId,
+                    SemesterName = course.Semester.SemesterName,
+                    StartDate = course.Semester.StartDate,
+                    EndDate = course.Semester.EndDate
+                },
+                SubjectDTO = course.Subject == null ? null : new SubjectDTO
+                {
+                    SubjectId = course.Subject.SubjectId,
+                    SubjectCode = course.Subject.SubjectCode,
+                    SubjectName = course.Subject.SubjectName,
+                    Credit = course.Subject.Credit
+                }
+            };
+
+        }
+
+        public async Task<IEnumerable<EnrollmentDTO>> GetEnrollmentsByCourseAsync(int courseId, string? expand)
+        {
+            // 1. Phân tích chuỗi expand nhận từ Controller
+            var expandFields = expand?
+                .Split(',', StringSplitOptions.RemoveEmptyEntries | StringSplitOptions.TrimEntries)
+                .Select(x => x.ToLowerInvariant())
+                .ToHashSet() ?? new HashSet<string>();
+                
+            bool includeStudent = expandFields.Contains("student");
+
+            // 2. Gọi Repository để lấy danh sách Entity
+            var enrollments = await _courseRepository.GetEnrollmentsByCourseIdAsync(courseId, includeStudent);
+
+            // 3. Thực hiện Mapping an toàn từ Entity sang DTO
+            return enrollments.Select((Enrollment e) => new EnrollmentDTO
+            {
+                EnrollmentId = e.EnrollmentId,
+                StudentId = e.StudentId,
+                CourseId = e.CourseId,
+                EnrollDate = e.EnrollDate,
+                Status = e.Status,
+                StudentDTO = !includeStudent || e.Student == null ? null : new StudentDTO
+                {
+                    StudentId = e.Student.StudentId,
+                    FullName = e.Student.FullName,
+                    Email = e.Student.Email
+                }
+            }).ToList();
         }
     }
 }
