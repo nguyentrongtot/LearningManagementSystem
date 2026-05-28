@@ -1,0 +1,17 @@
+﻿namespace PRN232.LMS.API.Models.Responses
+{
+    public class EnrollmentInCourseResponse
+    {
+        public int EnrollmentId { get; set; }
+        public int StudentId { get; set; }
+
+        public int CourseId { get; set; }
+
+        public DateTime EnrollDate { get; set; }
+
+        public string Status { get; set; } = null!;
+
+        public string CourseName { get; set; }
+        public StudentResponse? Student { get; set; }
+    }
+}

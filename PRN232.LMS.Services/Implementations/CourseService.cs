@@ -177,6 +177,11 @@ namespace PRN232.LMS.Services.Implementations
                 CourseId = e.CourseId,
                 EnrollDate = e.EnrollDate,
                 Status = e.Status,
+                CourseDTO = new CourseDTO
+                {
+                    CourseId = e.CourseId,
+                    CourseName = e.Course.CourseName
+                },
                 StudentDTO = !includeStudent || e.Student == null ? null : new StudentDTO
                 {
                     StudentId = e.Student.StudentId,

@@ -238,13 +238,14 @@ namespace PRN232.LMS.API.Controllers
             var enrollmentDtos = await _courseService.GetEnrollmentsByCourseAsync(id, expand);
 
             // Bước C: Mapping từ DTO sang Response hiển thị
-            var responseData = enrollmentDtos.Select(e => new EnrollmentResponse
+            var responseData = enrollmentDtos.Select(e => new EnrollmentInCourseResponse
             {
                 EnrollmentId = e.EnrollmentId,
                 StudentId = e.StudentId,
                 CourseId = id,
                 EnrollDate = e.EnrollDate,
                 Status = e.Status,
+                CourseName = e.CourseDTO?.CourseName,
                 Student = e.StudentDTO == null ? null : new StudentResponse
                 {
                     StudentId = e.StudentDTO.StudentId,
@@ -254,7 +255,7 @@ namespace PRN232.LMS.API.Controllers
             }).ToList();
 
             // Bước D: Trả dữ liệu về Client theo format chuẩn
-            return Ok(new ApiResponse<IEnumerable<EnrollmentResponse>>
+            return Ok(new ApiResponse<IEnumerable<EnrollmentInCourseResponse>>
             {
                 Success = true,
                 Message = $"Enrollments for course ID {id} retrieved successfully.",
