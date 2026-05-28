@@ -245,7 +245,6 @@ namespace PRN232.LMS.API.Controllers
                 CourseId = id,
                 EnrollDate = e.EnrollDate,
                 Status = e.Status,
-                CourseName = e.CourseDTO?.CourseName,
                 Student = e.StudentDTO == null ? null : new StudentResponse
                 {
                     StudentId = e.StudentDTO.StudentId,
