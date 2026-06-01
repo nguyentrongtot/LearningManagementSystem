@@ -39,7 +39,7 @@ namespace PRN232.LMS.API.Controllers
             return Ok(new ApiResponse<List<System.Dynamic.ExpandoObject>>
             {
                 Success = true,
-                Message = "Subjects retrieved successfully.",
+                Message = "Request processed successfully",
                 Data = pagedResult.Items,
                 Errors = null,
                 Pagination = new PaginationMetadata
@@ -79,7 +79,7 @@ namespace PRN232.LMS.API.Controllers
             return Ok(new ApiResponse<SubjectResponse>
             {
                 Success = true,
-                Message = $"Subject with ID {id} retrieved successfully.",
+                Message = $"Request processed successfully",
                 Data = responseData,
                 Errors = null
             });
@@ -104,7 +104,7 @@ namespace PRN232.LMS.API.Controllers
                 return CreatedAtAction(nameof(GetById), new { id = created.SubjectId }, new ApiResponse<SubjectResponse>
                 {
                     Success = true,
-                    Message = "Subject created successfully.",
+                    Message = "Request processed successfully",
                     Data = responseData,
                     Errors = null
                 });
@@ -139,7 +139,7 @@ namespace PRN232.LMS.API.Controllers
                 return Ok(new ApiResponse<SubjectResponse>
                 {
                     Success = true,
-                    Message = $"Subject with ID {id} updated successfully.",
+                    Message = $"Request processed successfully",
                     Data = responseData,
                     Errors = null
                 });
@@ -177,7 +177,7 @@ namespace PRN232.LMS.API.Controllers
                 return Ok(new ApiResponse<string>
                 {
                     Success = true,
-                    Message = $"Subject with ID {id} deleted successfully.",
+                    Message = $"Request processed successfully",
                     Data = null,
                     Errors = null
                 });

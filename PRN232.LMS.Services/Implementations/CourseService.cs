@@ -16,11 +16,15 @@ namespace PRN232.LMS.Services.Implementations
     {
         private readonly ICourseRepository _courseRepository;
         private readonly IEnrollmentRepository _enrollmentRepository;
+        private readonly ISemesterRepository _semesterRepository;
+        private readonly ISubjectRepository _subjectRepository;
 
-        public CourseService(ICourseRepository courseRepository, IEnrollmentRepository enrollmentRepository)
+        public CourseService(ICourseRepository courseRepository, IEnrollmentRepository enrollmentRepository, ISemesterRepository semesterRepository, ISubjectRepository subjectRepository)
         {
             _courseRepository = courseRepository;
             _enrollmentRepository = enrollmentRepository;
+            _semesterRepository = semesterRepository;
+            _subjectRepository  = subjectRepository;
         }
 
         public async Task<PagedResult<ExpandoObject>> GetCoursesAsync(string? search, string? sort, int? page = 1, int? size = 10, string? fields = null, string? expand = null)
@@ -81,11 +85,20 @@ namespace PRN232.LMS.Services.Implementations
 
         public async Task<CourseDTO> CreateCourseAsync(CourseCreateRequest createRequest)
         {
+            if(await _subjectRepository.GetByIdAsync(createRequest.SubjectId) == null)
+            {
+                throw new ArgumentException("Subject is not exist");
+            }
+            if (await _semesterRepository.GetByIdAsync(createRequest.SemesterId) == null)
+            {
+                throw new ArgumentException("Semester is not exist");
+            }
             var entity = new Course
             {
                 CourseName = createRequest.CourseName,
                 SemesterId = createRequest.SemesterId,
                 SubjectId = createRequest.SubjectId
+
             };
 
             var created = await _courseRepository.CreateAsync(entity);
@@ -94,7 +107,21 @@ namespace PRN232.LMS.Services.Implementations
                 CourseId = created.CourseId,
                 CourseName = created.CourseName,
                 SemesterId = created.SemesterId,
-                SubjectId = created.SubjectId
+                SubjectId = created.SubjectId,
+                SemesterDTO = new SemesterDTO
+                {
+                    SemesterId = created.Semester.SemesterId,
+                    SemesterName = created.Semester.SemesterName,
+                    StartDate = created.Semester.StartDate,
+                    EndDate = created.Semester.EndDate
+                },
+                SubjectDTO = new SubjectDTO
+                {
+                    SubjectId = created.Subject.SubjectId,
+                    SubjectCode = created.Subject.SubjectCode,
+                    SubjectName = created.Subject.SubjectName,
+                    Credit = created.Subject.Credit
+                }
             };
         }
 

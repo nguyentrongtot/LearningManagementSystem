@@ -11,7 +11,7 @@ namespace PRN232.LMS.API.Models.Responses
 
         public string Status { get; set; } = null!;
 
-        public CourseResponse? Course { get; set; }
-        public StudentResponse? Student { get; set; }
+        public CourseResponse? CourseResponse { get; set; }
+        public StudentResponse? StudentResponse { get; set; }   
     }
 }

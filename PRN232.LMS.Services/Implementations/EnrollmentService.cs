@@ -15,36 +15,34 @@ namespace PRN232.LMS.Services.Implementations
     public class EnrollmentService : IEnrollmentService
     {
         private readonly IEnrollmentRepository _enrollmentRepository;
+        private readonly IStudentRepository _studentRepository;
+        private readonly ICourseRepository _courseRepository;
 
-        public EnrollmentService(IEnrollmentRepository enrollmentRepository)
+        public EnrollmentService(IEnrollmentRepository enrollmentRepository , IStudentRepository studentRepository, ICourseRepository courseRepository)
         {
             _enrollmentRepository = enrollmentRepository;
+            _studentRepository = studentRepository;
+            _courseRepository  = courseRepository;
         }
 
         public async Task<PagedResult<ExpandoObject>> GetEnrollmentsAsync(string? search, string? sort, int? page = 1, int? size = 10, string? fields = null, string? expand = null)
         {
             var sortParams = new List<(string Field, bool IsDescending)>();
-            if (!string.IsNullOrWhiteSpace(sort))
-            {
-                var sortExpression = sort.Split(',');
-                foreach (var expression in sortExpression)
-                {
-                    var trimmedExpression = expression.Trim().ToLower();
-                    var isDescending = trimmedExpression.StartsWith("-");
-                    var propertyName = isDescending ? trimmedExpression.Substring(1) : trimmedExpression;
-                    sortParams.Add((propertyName, isDescending));
-                }
-            }
+            var expandFields = (expand ?? string.Empty)
+                                .Split(',', StringSplitOptions.RemoveEmptyEntries | StringSplitOptions.TrimEntries)
+                                .Select(x => x.ToLowerInvariant())
+                                .ToHashSet();
 
-            bool includeRelations = !string.IsNullOrWhiteSpace(expand) && 
-                (expand.Contains("student", StringComparison.OrdinalIgnoreCase) || expand.Contains("course", StringComparison.OrdinalIgnoreCase));
+            bool includeStudent = expandFields.Contains("student");
+            bool includeCourse = expandFields.Contains("course");
 
-            var enrollments = await _enrollmentRepository.GetAllAsync(search, sortParams, page, size, includeRelations);
+            var enrollments = await _enrollmentRepository.GetAllAsync(search, sortParams, page, size, includeStudent, includeCourse);
             
             var dtos = enrollments.Items.Select(e => new EnrollmentDTO
             {
                 EnrollmentId = e.EnrollmentId,
                 CourseId = e.CourseId,
+                StudentId = e.StudentId,
                 EnrollDate = e.EnrollDate,
                 Status = e.Status,
                 CourseDTO = e.Course == null ? null : new CourseDTO
@@ -52,9 +50,29 @@ namespace PRN232.LMS.Services.Implementations
                     CourseId = e.Course.CourseId,
                     CourseName = e.Course.CourseName,
                     SemesterId = e.Course.SemesterId,
-                    SubjectId = e.Course.SubjectId
+                    SubjectId = e.Course.SubjectId,
+                    SemesterDTO = e.Course.Semester == null ? null : new SemesterDTO
+                    {
+                        SemesterId = e.Course.Semester.SemesterId,
+                        SemesterName = e.Course.Semester.SemesterName,
+                        StartDate = e.Course.Semester.StartDate,
+                        EndDate = e.Course.Semester.EndDate
+                    },
+                    SubjectDTO = e.Course.Subject == null ? null : new SubjectDTO
+                    {
+                        SubjectId = e.Course.Subject.SubjectId,
+                        SubjectCode = e.Course.Subject.SubjectCode,
+                        SubjectName = e.Course.Subject.SubjectName,
+                        Credit = e.Course.Subject.Credit
+                    }
+                },
+                StudentDTO = e.Student == null ? null : new StudentDTO
+                {
+                    StudentId = e.Student.StudentId,
+                    FullName = e.Student.FullName,
+                    DateOfBirth = e.Student.DateOfBirth,
+                    Email = e.Student.Email
                 }
-                // Note: the original EnrollmentDTO doesn't have StudentDTO, but we can return dynamic fields via shaping anyway.
             }).ToList();
 
             var shaped = dtos.Select(dto => DataShaper.ShapeData(dto, fields)).ToList();
@@ -104,22 +122,61 @@ namespace PRN232.LMS.Services.Implementations
             {
                 throw new ArgumentException("Status must be one of: Active, Dropped, Completed.");
             }
+            if(await _studentRepository.GetByIdAsync(createRequest.StudentId) == null)
+            {
+                throw new ArgumentException("Student is not exist");
+            }
 
+            if (await _courseRepository.GetByIdAsync(createRequest.CourseId) == null)
+            {
+                throw new ArgumentException("Course is not exist");
+            }
             var entity = new Enrollment
             {
                 StudentId = createRequest.StudentId,
                 CourseId = createRequest.CourseId,
                 EnrollDate = createRequest.EnrollDate,
-                Status = createRequest.Status
+                Status = createRequest.Status,
+                Student = await _studentRepository.GetByIdAsync(createRequest.StudentId),
+                Course = await _courseRepository.GetByIdAsync(createRequest.CourseId)
             };
 
             var created = await _enrollmentRepository.CreateAsync(entity);
             return new EnrollmentDTO
             {
                 EnrollmentId = created.EnrollmentId,
+                StudentId = created.StudentId,
                 CourseId = created.CourseId,
                 EnrollDate = created.EnrollDate,
-                Status = created.Status
+                Status = created.Status,
+                StudentDTO = new StudentDTO
+                {
+                    StudentId = created.StudentId,
+                    FullName = created.Student?.FullName,
+                    Email = created.Student?.Email,
+                    DateOfBirth = (DateTime)(created.Student?.DateOfBirth)
+                },
+                CourseDTO = new CourseDTO
+                {
+                    CourseId = created.CourseId,
+                    CourseName = created.Course?.CourseName,
+                    SemesterId = created.Course?.SemesterId ?? 0,
+                    SubjectId = created.Course?.SubjectId ?? 0,
+                    SemesterDTO = created.Course?.Semester == null ? null : new SemesterDTO
+                    {
+                        SemesterId = created.Course.Semester.SemesterId,
+                        SemesterName = created.Course.Semester.SemesterName,
+                        StartDate = created.Course.Semester.StartDate,
+                        EndDate = created.Course.Semester.EndDate
+                    },
+                    SubjectDTO = created.Course?.Subject == null ? null : new SubjectDTO
+                    {
+                        SubjectId = created.Course.Subject.SubjectId,
+                        SubjectCode = created.Course.Subject.SubjectCode,
+                        SubjectName = created.Course.Subject.SubjectName,
+                        Credit = created.Course.Subject.Credit
+                    }
+                }
             };
         }
 

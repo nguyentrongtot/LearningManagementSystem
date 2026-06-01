@@ -18,16 +18,21 @@ namespace PRN232.LMS.Repositories.Implementations
             _context = context;
         }
 
-        public async Task<PagedResult<Enrollment>> GetAllAsync(string? search, List<(string Field, bool IsDescending)> sortParams, int? page, int? size, bool includeRelations)
+        public async Task<PagedResult<Enrollment>> GetAllAsync(string? search, List<(string Field, bool IsDescending)> sortParams, int? page, int? size, bool includeStudent, bool includeCourse)
         {
             var query = _context.Enrollments.AsQueryable();
-
-            if (includeRelations)
+            if (includeStudent)
             {
-                query = query.Include(e => e.Student).Include(e => e.Course).ThenInclude(c => c.Semester)
-                             .Include(e => e.Course).ThenInclude(c => c.Subject);
+                query = query.Include(e => e.Student);
             }
 
+            if (includeCourse)
+            {
+                query = query.Include(e => e.Course)
+                             .ThenInclude(c => c.Semester)
+                             .Include(e => e.Course)
+                             .ThenInclude(c => c.Subject);
+            }
             if (!string.IsNullOrWhiteSpace(search))
             {
                 query = query.Where(e => e.Status.Contains(search) || (e.Student != null && e.Student.FullName.Contains(search)));

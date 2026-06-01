@@ -39,7 +39,7 @@ namespace PRN232.LMS.API.Controllers
             return Ok(new ApiResponse<List<System.Dynamic.ExpandoObject>>
             {
                 Success = true,
-                Message = "Enrollments retrieved successfully.",
+                Message = "Request processed successfully",
                 Data = pagedResult.Items,
                 Errors = null,
                 Pagination = new PaginationMetadata
@@ -74,7 +74,7 @@ namespace PRN232.LMS.API.Controllers
                 CourseId = enrollment.CourseId,
                 EnrollDate = enrollment.EnrollDate,
                 Status = enrollment.Status,
-                Course = enrollment.CourseDTO == null ? null : new CourseResponse
+                CourseResponse = enrollment.CourseDTO == null ? null : new CourseResponse
                 {
                     CourseId = enrollment.CourseDTO.CourseId,
                     CourseName = enrollment.CourseDTO.CourseName,
@@ -100,7 +100,7 @@ namespace PRN232.LMS.API.Controllers
             return Ok(new ApiResponse<EnrollmentResponse>
             {
                 Success = true,
-                Message = $"Enrollment with ID {id} retrieved successfully.",
+                Message = $"Request processed successfully",
                 Data = responseData,
                 Errors = null
             });
@@ -118,14 +118,44 @@ namespace PRN232.LMS.API.Controllers
                 {
                     EnrollmentId = created.EnrollmentId,
                     CourseId = created.CourseId,
+                    StudentId = created.StudentId,
                     EnrollDate = created.EnrollDate,
-                    Status = created.Status
+                    Status = created.Status,
+                    StudentResponse = new StudentResponse
+                    {
+                        StudentId = created.StudentDTO.StudentId,
+                        FullName = created.StudentDTO.FullName,
+                        Email = created.StudentDTO.Email,
+                        DateOfBirth = created.StudentDTO.DateOfBirth
+                    },
+                    CourseResponse = new CourseResponse
+                    {
+                        CourseId = created.CourseDTO.CourseId,
+                        CourseName = created.CourseDTO.CourseName,
+                        SemesterId = created.CourseDTO.SemesterId,
+                        SubjectId = created.CourseDTO.SubjectId,
+                        Semester = created.CourseDTO.SemesterDTO == null ? null : new SemesterResponse
+                        {
+                            SemesterId = created.CourseDTO.SemesterDTO.SemesterId,
+                            SemesterName = created.CourseDTO.SemesterDTO.SemesterName,
+                            StartDate = created.CourseDTO.SemesterDTO.StartDate,
+                            EndDate = created.CourseDTO.SemesterDTO.EndDate
+                        },
+                        Subject = created.CourseDTO.SubjectDTO == null ? null : new SubjectResponse
+                        {
+                            SubjectId = created.CourseDTO.SubjectDTO.SubjectId,
+                            SubjectCode = created.CourseDTO.SubjectDTO.SubjectCode,
+                            SubjectName = created.CourseDTO.SubjectDTO.SubjectName,
+                            Credit = created.CourseDTO.SubjectDTO.Credit
+                        }
+                    }
+
                 };
 
                 return CreatedAtAction(nameof(GetById), new { id = created.EnrollmentId }, new ApiResponse<EnrollmentResponse>
                 {
                     Success = true,
-                    Message = "Enrollment created successfully.",
+                    Message = "Request processed successfully",
                     Data = responseData,
                     Errors = null
                 });
@@ -160,7 +190,7 @@ namespace PRN232.LMS.API.Controllers
                 return Ok(new ApiResponse<EnrollmentResponse>
                 {
                     Success = true,
-                    Message = $"Enrollment with ID {id} updated successfully.",
+                    Message = $"Request processed successfully",
                     Data = responseData,
                     Errors = null
                 });
@@ -198,7 +228,7 @@ namespace PRN232.LMS.API.Controllers
                 return Ok(new ApiResponse<string>
                 {
                     Success = true,
-                    Message = $"Enrollment with ID {id} deleted successfully.",
+                    Message = $"Request processed successfully",
                     Data = null,
                     Errors = null
                 });

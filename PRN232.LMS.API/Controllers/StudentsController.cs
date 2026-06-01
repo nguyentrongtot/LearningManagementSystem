@@ -43,7 +43,7 @@ namespace PRN232.LMS.API.Controllers
             var apiResponses = new ApiResponse<List<System.Dynamic.ExpandoObject>>
             {
                 Success = true,
-                Message = "Students retrieved successfully.",
+                Message = "Request processed successfully",
                 Data = studentsPagedResult.Items, 
                 Errors = null,
                 Pagination = new PaginationMetadata
@@ -84,7 +84,7 @@ namespace PRN232.LMS.API.Controllers
             var apiResponseSuccess = new ApiResponse<StudentDetailResponse>
             {
                 Success = true,
-                Message = $"Student with ID {id} retrieved successfully.",
+                Message = $"Request processed successfully",
                 Data = new StudentDetailResponse
                 {
                     StudentId = student.StudentId,
@@ -97,7 +97,7 @@ namespace PRN232.LMS.API.Controllers
                         CourseId = e.CourseId,
                         EnrollDate = e.EnrollDate,
                         Status = e.Status,
-                        Course = e.CourseDTO == null ? null : new CourseResponse
+                        CourseResponse = e.CourseDTO == null ? null : new CourseResponse
                         {
                             CourseId = e.CourseDTO.CourseId,
                             CourseName = e.CourseDTO.CourseName,
@@ -149,7 +149,7 @@ namespace PRN232.LMS.API.Controllers
                 var successResponse = new ApiResponse<StudentResponse>
                 {
                     Success = true,
-                    Message = "Student created successfully.",
+                    Message = "Request processed successfully",
                     Data = responseData,
                     Errors = (List<string>?)null
                 };
@@ -193,7 +193,7 @@ namespace PRN232.LMS.API.Controllers
                 var successResponse = new ApiResponse<StudentResponse>
                 {
                     Success = true,
-                    Message = $"Student with ID {id} updated successfully.",
+                    Message = $"Request processed successfully",
                     Data = responseData,
                     Errors = null
                 };
@@ -233,7 +233,7 @@ namespace PRN232.LMS.API.Controllers
                 return Ok(new ApiResponse<string>
                 {
                     Success = true,
-                    Message = $"Student with ID {id} deleted successfully.",
+                    Message = $"Request processed successfully",
                     Data = null,
                     Errors = null
                 });

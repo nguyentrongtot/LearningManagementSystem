@@ -21,7 +21,7 @@ namespace PRN232.LMS.API.Controllers
         }
 
         [HttpGet]
-        [ProducesResponseType(typeof(ApiResponse<List<System.Dynamic.ExpandoObject>>), StatusCodes.Status200OK)]
+        [ProducesResponseType(typeof(ApiResponse<List<CourseResponse>>), StatusCodes.Status200OK)]
         [ProducesResponseType(typeof(ApiErrorResponse), StatusCodes.Status404NotFound)]
         public async Task<IActionResult> GetAll([FromQuery] string? search, [FromQuery] string? sort, [FromQuery] int? page, [FromQuery] int? size, [FromQuery] string? fields, [FromQuery] string? expand)
         {
@@ -39,7 +39,7 @@ namespace PRN232.LMS.API.Controllers
             return Ok(new ApiResponse<List<System.Dynamic.ExpandoObject>>
             {
                 Success = true,
-                Message = "Courses retrieved successfully.",
+                Message = "Request processed successfully",
                 Data = pagedResult.Items,
                 Errors = null,
                 Pagination = new PaginationMetadata
@@ -93,7 +93,7 @@ namespace PRN232.LMS.API.Controllers
             return Ok(new ApiResponse<CourseResponse>
             {
                 Success = true,
-                Message = $"Course with ID {id} retrieved successfully.",
+                Message = $"Request processed successfully",
                 Data = responseData,
                 Errors = null
             });
@@ -112,13 +112,27 @@ namespace PRN232.LMS.API.Controllers
                     CourseId = created.CourseId,
                     CourseName = created.CourseName,
                     SemesterId = created.SemesterId,
-                    SubjectId = created.SubjectId
+                    SubjectId = created.SubjectId,
+                    Semester = created.SemesterDTO == null ? null : new SemesterResponse
+                    {
+                        SemesterId = created.SemesterDTO.SemesterId,
+                        SemesterName = created.SemesterDTO.SemesterName,
+                        StartDate = created.SemesterDTO.StartDate,
+                        EndDate = created.SemesterDTO.EndDate
+                    },
+                    Subject = created.SubjectDTO == null ? null : new SubjectResponse
+                    {
+                        SubjectId = created.SubjectDTO.SubjectId,
+                        SubjectCode = created.SubjectDTO.SubjectCode,
+                        SubjectName = created.SubjectDTO.SubjectName,
+                        Credit = created.SubjectDTO.Credit
+                    }
                 };
 
                 return CreatedAtAction(nameof(GetById), new { id = created.CourseId }, new ApiResponse<CourseResponse>
                 {
                     Success = true,
-                    Message = "Course created successfully.",
+                    Message = "Request processed successfully",
                     Data = responseData,
                     Errors = null
                 });
@@ -153,7 +167,7 @@ namespace PRN232.LMS.API.Controllers
                 return Ok(new ApiResponse<CourseResponse>
                 {
                     Success = true,
-                    Message = $"Course with ID {id} updated successfully.",
+                    Message = $"Request processed successfully",
                     Data = responseData,
                     Errors = null
                 });
@@ -191,7 +205,7 @@ namespace PRN232.LMS.API.Controllers
                 return Ok(new ApiResponse<string>
                 {
                     Success = true,
-                    Message = $"Course with ID {id} deleted successfully.",
+                    Message = $"Request processed successfully",
                     Data = null,
                     Errors = null
                 });
@@ -257,7 +271,7 @@ namespace PRN232.LMS.API.Controllers
             return Ok(new ApiResponse<IEnumerable<EnrollmentInCourseResponse>>
             {
                 Success = true,
-                Message = $"Enrollments for course ID {id} retrieved successfully.",
+                Message = $"Request processed successfully",
                 Data = responseData
             });
         }
