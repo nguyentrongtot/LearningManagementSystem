@@ -2,9 +2,9 @@
 using Microsoft.EntityFrameworkCore;
 using System.Reflection;
 using PRN232.LMS.Repositories.Data;
-using PRN232.LMS.Repositories.Implementations;
+using PRN232.LMS.Repositories.DAL;
 using PRN232.LMS.Repositories.Interfaces;
-using PRN232.LMS.Services.Implementations;
+using PRN232.LMS.Services.BLL;
 using PRN232.LMS.Services.Interfaces;
 
 namespace PRN232.LMS.API
@@ -49,14 +49,16 @@ namespace PRN232.LMS.API
                 options.UseSqlServer(builder.Configuration.GetConnectionString("DefaultConnection")));
             var app = builder.Build();
 
-           
+            using (var scope = app.Services.CreateScope())
+            {
+                var context = scope.ServiceProvider.GetRequiredService<LmsDbContext>();
+                DbInitializer.InitializeAsync(context).GetAwaiter().GetResult();
+            }
+
+            app.UseSwagger();
+            app.UseSwaggerUI();
 
             // Configure the HTTP request pipeline.
-            if (app.Environment.IsDevelopment())
-            {
-                app.UseSwagger();
-                app.UseSwaggerUI();
-            }
 
 
             app.UseAuthorization();

@@ -3,7 +3,7 @@ using Microsoft.AspNetCore.Http.HttpResults;
 using Microsoft.AspNetCore.Mvc;
 using PRN232.LMS.API.Models.Responses;
 using PRN232.LMS.Services.Interfaces;
-using PRN232.LMS.Services.Models;
+using PRN232.LMS.API.Models.Requests;
 
 namespace PRN232.LMS.API.Controllers
 {
@@ -29,32 +29,12 @@ namespace PRN232.LMS.API.Controllers
         public async Task<IActionResult> GetAll([FromQuery(Name = "search")] string? search, [FromQuery(Name = "sort")] string? sort, [FromQuery] int? page, [FromQuery] int? size, [FromQuery] string? fields, [FromQuery] string? expand)
         {
             var studentsPagedResult = await _studentService.GetStudentAsync(search, sort, page, size, fields, expand);
-            if (studentsPagedResult == null || !studentsPagedResult.Items.Any())
-            {
-                var errorResponse = new ApiErrorResponse
-                {
-                    Success = false,
-                    Message = "No students found.",
-                    Errors = new List<string> { "No students available with the criteria." }
-                };
-                return NotFound(errorResponse);
-            }
-
-            var apiResponses = new ApiResponse<List<System.Dynamic.ExpandoObject>>
-            {
-                Success = true,
-                Message = "Request processed successfully",
-                Data = studentsPagedResult.Items, 
-                Errors = null,
-                Pagination = new PaginationMetadata
-                {
-                    Page = studentsPagedResult.Page,
-                    PageSize = studentsPagedResult.PageSize,
-                    TotalItems = studentsPagedResult.TotalItems,
-                    TotalPages = studentsPagedResult.TotalPages
-                }
-            };
-            return Ok(apiResponses);
+            return Ok(ApiResponseFactory.CreatePagedList(
+                studentsPagedResult.Items,
+                studentsPagedResult.Page,
+                studentsPagedResult.PageSize,
+                studentsPagedResult.TotalItems,
+                studentsPagedResult.TotalPages));
         }
 
 
@@ -136,7 +116,7 @@ namespace PRN232.LMS.API.Controllers
         {
             try
             {
-                var students = await _studentService.CreateStudentAsync(createRequest);
+                var students = await _studentService.CreateStudentAsync(RequestMapper.ToBusiness(createRequest));
                 
                 var responseData = new StudentResponse
                 {
@@ -180,7 +160,7 @@ namespace PRN232.LMS.API.Controllers
         {
             try
             {
-                var student = await _studentService.UpdateStudentAsync(id, updateRequest);
+                var student = await _studentService.UpdateStudentAsync(id, RequestMapper.ToBusiness(updateRequest));
 
                 var responseData = new StudentResponse
                 {
