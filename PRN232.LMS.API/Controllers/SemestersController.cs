@@ -2,7 +2,7 @@ using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 using PRN232.LMS.API.Models.Responses;
 using PRN232.LMS.Services.Interfaces;
-using PRN232.LMS.Services.Models;
+using PRN232.LMS.API.Models.Requests;
 using System;
 using System.Collections.Generic;
 using System.Threading.Tasks;
@@ -26,30 +26,12 @@ namespace PRN232.LMS.API.Controllers
         public async Task<IActionResult> GetAll([FromQuery] string? search, [FromQuery] string? sort, [FromQuery] int? page, [FromQuery] int? size, [FromQuery] string? fields)
         {
             var pagedResult = await _semesterService.GetSemestersAsync(search, sort, page, size, fields);
-            if (pagedResult == null || pagedResult.Items.Count == 0)
-            {
-                return NotFound(new ApiErrorResponse
-                {
-                    Success = false,
-                    Message = "No semesters found.",
-                    Errors = new List<string> { "No semesters available with the given criteria." }
-                });
-            }
-
-            return Ok(new ApiResponse<List<System.Dynamic.ExpandoObject>>
-            {
-                Success = true,
-                Message = "Request processed successfully",
-                Data = pagedResult.Items,
-                Errors = null,
-                Pagination = new PaginationMetadata
-                {
-                    Page = pagedResult.Page,
-                    PageSize = pagedResult.PageSize,
-                    TotalItems = pagedResult.TotalItems,
-                    TotalPages = pagedResult.TotalPages
-                }
-            });
+            return Ok(ApiResponseFactory.CreatePagedList(
+                pagedResult.Items,
+                pagedResult.Page,
+                pagedResult.PageSize,
+                pagedResult.TotalItems,
+                pagedResult.TotalPages));
         }
 
         [HttpGet("{id}")]
@@ -92,7 +74,7 @@ namespace PRN232.LMS.API.Controllers
         {
             try
             {
-                var created = await _semesterService.CreateSemesterAsync(createRequest);
+                var created = await _semesterService.CreateSemesterAsync(RequestMapper.ToBusiness(createRequest));
                 var responseData = new SemesterResponse
                 {
                     SemesterId = created.SemesterId,
@@ -127,7 +109,7 @@ namespace PRN232.LMS.API.Controllers
         {
             try
             {
-                var updated = await _semesterService.UpdateSemesterAsync(id, updateRequest);
+                var updated = await _semesterService.UpdateSemesterAsync(id, RequestMapper.ToBusiness(updateRequest));
                 var responseData = new SemesterResponse
                 {
                     SemesterId = updated.SemesterId,

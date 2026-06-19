@@ -5,7 +5,7 @@ using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 using PRN232.LMS.Repositories.Models;
-using PRN232.LMS.Services.Models;
+using PRN232.LMS.Services.Business;
 
 namespace PRN232.LMS.Services.Interfaces
 {
