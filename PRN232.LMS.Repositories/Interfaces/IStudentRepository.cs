@@ -3,7 +3,7 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
-using PRN232.LMS.Repositories.EntityModel;
+using PRN232.LMS.Repositories.Entities;
 using PRN232.LMS.Repositories.Models;
 
 namespace PRN232.LMS.Repositories.Interfaces

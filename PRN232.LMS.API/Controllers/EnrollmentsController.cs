@@ -2,7 +2,7 @@ using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 using PRN232.LMS.API.Models.Responses;
 using PRN232.LMS.Services.Interfaces;
-using PRN232.LMS.Services.Models;
+using PRN232.LMS.API.Models.Requests;
 using System;
 using System.Collections.Generic;
 using System.Threading.Tasks;
@@ -26,30 +26,12 @@ namespace PRN232.LMS.API.Controllers
         public async Task<IActionResult> GetAll([FromQuery] string? search, [FromQuery] string? sort, [FromQuery] int? page, [FromQuery] int? size, [FromQuery] string? fields, [FromQuery] string? expand)
         {
             var pagedResult = await _enrollmentService.GetEnrollmentsAsync(search, sort, page, size, fields, expand);
-            if (pagedResult == null || pagedResult.Items.Count == 0)
-            {
-                return NotFound(new ApiErrorResponse
-                {
-                    Success = false,
-                    Message = "No enrollments found.",
-                    Errors = new List<string> { "No enrollments available with the given criteria." }
-                });
-            }
-
-            return Ok(new ApiResponse<List<System.Dynamic.ExpandoObject>>
-            {
-                Success = true,
-                Message = "Request processed successfully",
-                Data = pagedResult.Items,
-                Errors = null,
-                Pagination = new PaginationMetadata
-                {
-                    Page = pagedResult.Page,
-                    PageSize = pagedResult.PageSize,
-                    TotalItems = pagedResult.TotalItems,
-                    TotalPages = pagedResult.TotalPages
-                }
-            });
+            return Ok(ApiResponseFactory.CreatePagedList(
+                pagedResult.Items,
+                pagedResult.Page,
+                pagedResult.PageSize,
+                pagedResult.TotalItems,
+                pagedResult.TotalPages));
         }
 
         [HttpGet("{id}")]
@@ -71,9 +53,17 @@ namespace PRN232.LMS.API.Controllers
             var responseData = new EnrollmentResponse
             {
                 EnrollmentId = enrollment.EnrollmentId,
+                StudentId = enrollment.StudentId,
                 CourseId = enrollment.CourseId,
                 EnrollDate = enrollment.EnrollDate,
                 Status = enrollment.Status,
+                StudentResponse = enrollment.StudentDTO == null ? null : new StudentResponse
+                {
+                    StudentId = enrollment.StudentDTO.StudentId,
+                    FullName = enrollment.StudentDTO.FullName,
+                    Email = enrollment.StudentDTO.Email,
+                    DateOfBirth = enrollment.StudentDTO.DateOfBirth
+                },
                 CourseResponse = enrollment.CourseDTO == null ? null : new CourseResponse
                 {
                     CourseId = enrollment.CourseDTO.CourseId,
@@ -113,7 +103,7 @@ namespace PRN232.LMS.API.Controllers
         {
             try
             {
-                var created = await _enrollmentService.CreateEnrollmentAsync(createRequest);
+                var created = await _enrollmentService.CreateEnrollmentAsync(RequestMapper.ToBusiness(createRequest));
                 var responseData = new EnrollmentResponse
                 {
                     EnrollmentId = created.EnrollmentId,
@@ -178,7 +168,7 @@ namespace PRN232.LMS.API.Controllers
         {
             try
             {
-                var updated = await _enrollmentService.UpdateEnrollmentAsync(id, updateRequest);
+                var updated = await _enrollmentService.UpdateEnrollmentAsync(id, RequestMapper.ToBusiness(updateRequest));
                 var responseData = new EnrollmentResponse
                 {
                     EnrollmentId = updated.EnrollmentId,

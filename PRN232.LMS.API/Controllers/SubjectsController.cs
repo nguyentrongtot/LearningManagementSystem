@@ -2,7 +2,7 @@ using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 using PRN232.LMS.API.Models.Responses;
 using PRN232.LMS.Services.Interfaces;
-using PRN232.LMS.Services.Models;
+using PRN232.LMS.API.Models.Requests;
 using System;
 using System.Collections.Generic;
 using System.Threading.Tasks;
@@ -26,30 +26,12 @@ namespace PRN232.LMS.API.Controllers
         public async Task<IActionResult> GetAll([FromQuery] string? search, [FromQuery] string? sort, [FromQuery] int? page, [FromQuery] int? size, [FromQuery] string? fields)
         {
             var pagedResult = await _subjectService.GetSubjectsAsync(search, sort, page, size, fields);
-            if (pagedResult == null || pagedResult.Items.Count == 0)
-            {
-                return NotFound(new ApiErrorResponse
-                {
-                    Success = false,
-                    Message = "No subjects found.",
-                    Errors = new List<string> { "No subjects available with the given criteria." }
-                });
-            }
-
-            return Ok(new ApiResponse<List<System.Dynamic.ExpandoObject>>
-            {
-                Success = true,
-                Message = "Request processed successfully",
-                Data = pagedResult.Items,
-                Errors = null,
-                Pagination = new PaginationMetadata
-                {
-                    Page = pagedResult.Page,
-                    PageSize = pagedResult.PageSize,
-                    TotalItems = pagedResult.TotalItems,
-                    TotalPages = pagedResult.TotalPages
-                }
-            });
+            return Ok(ApiResponseFactory.CreatePagedList(
+                pagedResult.Items,
+                pagedResult.Page,
+                pagedResult.PageSize,
+                pagedResult.TotalItems,
+                pagedResult.TotalPages));
         }
 
         [HttpGet("{id}")]
@@ -92,7 +74,7 @@ namespace PRN232.LMS.API.Controllers
         {
             try
             {
-                var created = await _subjectService.CreateSubjectAsync(createRequest);
+                var created = await _subjectService.CreateSubjectAsync(RequestMapper.ToBusiness(createRequest));
                 var responseData = new SubjectResponse
                 {
                     SubjectId = created.SubjectId,
@@ -127,7 +109,7 @@ namespace PRN232.LMS.API.Controllers
         {
             try
             {
-                var updated = await _subjectService.UpdateSubjectAsync(id, updateRequest);
+                var updated = await _subjectService.UpdateSubjectAsync(id, RequestMapper.ToBusiness(updateRequest));
                 var responseData = new SubjectResponse
                 {
                     SubjectId = updated.SubjectId,
