@@ -116,14 +116,50 @@ public static class DbInitializer
 
     private static async Task EnsureDatabaseMigratedAsync(LmsDbContext context)
     {
-        if (!await context.Database.CanConnectAsync())
+        const int maxRetries = 15;
+        Exception? lastException = null;
+
+        for (var attempt = 1; attempt <= maxRetries; attempt++)
         {
-            throw new InvalidOperationException("Cannot connect to the database. Check your connection string.");
+            try
+            {
+                await ApplyMigrationsAsync(context);
+                return;
+            }
+            catch (Exception ex) when (attempt < maxRetries && IsTransientDbError(ex))
+            {
+                lastException = ex;
+                await Task.Delay(TimeSpan.FromSeconds(2));
+            }
         }
 
-        var pendingMigrations = (await context.Database.GetPendingMigrationsAsync()).ToList();
+        throw new InvalidOperationException(
+            "Cannot connect to the database. Check your connection string.",
+            lastException);
+    }
+
+    private static async Task ApplyMigrationsAsync(LmsDbContext context)
+    {
+        List<string> pendingMigrations;
+        try
+        {
+            pendingMigrations = (await context.Database.GetPendingMigrationsAsync()).ToList();
+        }
+        catch (SqlException ex) when (ex.Number == 4060)
+        {
+            // Database chưa tồn tại (volume mới) — MigrateAsync sẽ tự tạo DB + schema
+            await context.Database.MigrateAsync();
+            return;
+        }
+
         if (pendingMigrations.Count == 0)
         {
+            return;
+        }
+
+        if (!await context.Database.CanConnectAsync())
+        {
+            await context.Database.MigrateAsync();
             return;
         }
 
@@ -141,6 +177,19 @@ public static class DbInitializer
         {
             await BaselineMigrationsAsync(context, pendingMigrations);
         }
+    }
+
+    private static bool IsTransientDbError(Exception ex)
+    {
+        for (var current = ex; current is not null; current = current.InnerException)
+        {
+            if (current is SqlException sqlEx)
+            {
+                return sqlEx.Number is -2 or 4060 or 18456 or 233 or 10061;
+            }
+        }
+
+        return ex is TimeoutException;
     }
 
     private static async Task<bool> TableExistsAsync(LmsDbContext context, string tableName)
