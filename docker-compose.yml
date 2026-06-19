@@ -36,6 +36,7 @@ services:
     depends_on:
       lms-db:
         condition: service_healthy          # Chờ đến khi DB healthcheck pass mới start API
+    restart: on-failure
 
 volumes:
   mssql-data:
