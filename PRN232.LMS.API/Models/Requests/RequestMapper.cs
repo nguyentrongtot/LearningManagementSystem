@@ -75,4 +75,15 @@ public static class RequestMapper
         SubjectName = request.SubjectName,
         Credit = request.Credit
     };
+
+    public static Business.LoginRequest ToBusiness(LoginRequest request) => new()
+    {
+        Username = request.Username,
+        Password = request.Password
+    };
+
+    public static Business.RefreshTokenRequest ToBusiness(RefreshTokenRequest request) => new()
+    {
+        RefreshToken = request.RefreshToken
+    };
 }

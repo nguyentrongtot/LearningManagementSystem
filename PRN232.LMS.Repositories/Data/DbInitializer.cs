@@ -9,6 +9,7 @@ public static class DbInitializer
     public static async Task InitializeAsync(LmsDbContext context)
     {
         await EnsureDatabaseMigratedAsync(context);
+        await SeedUsersAsync(context);
 
         if (await context.Students.AnyAsync())
         {
@@ -43,8 +44,11 @@ public static class DbInitializer
         await context.SaveChangesAsync();
 
         var students = new List<Student>();
-        var firstNames = new[] { "Nguyen Van", "Tran Duc", "Le Minh", "Pham Hoang", "Nguyen Thi",
-            "Vo Thanh", "Bui Quoc", "Do Van", "Tran Minh", "Nguyen Quang" };
+        var firstNames = new[]
+        {
+            "Nguyen Van", "Tran Duc", "Le Minh", "Pham Hoang", "Nguyen Thi",
+            "Vo Thanh", "Bui Quoc", "Do Van", "Tran Minh", "Nguyen Quang"
+        };
         var lastNames = new[] { "An", "Binh", "Cuong", "Dung", "Em", "Giang", "Hieu", "Hung", "Khanh", "Lam" };
         var emailPrefixes = new[] { "nva", "tdb", "lmc", "phd", "nte", "vtg", "bqh", "dvh", "tmk", "nql" };
 
@@ -61,7 +65,6 @@ public static class DbInitializer
             });
         }
 
-        // Ensure student 1 matches common search keyword "nguyen"
         students[0].FullName = "Nguyen Van An";
         students[0].Email = "nvase180001@fpt.edu.vn";
         students[0].DateOfBirth = new DateTime(2004, 1, 15);
@@ -95,7 +98,10 @@ public static class DbInitializer
             {
                 foreach (var course in courses)
                 {
-                    if (enrollments.Count >= 500) break;
+                    if (enrollments.Count >= 500)
+                    {
+                        break;
+                    }
 
                     enrollments.Add(new Enrollment
                     {
@@ -106,11 +112,42 @@ public static class DbInitializer
                     });
                     enrollmentId++;
                 }
-                if (enrollments.Count >= 500) break;
+
+                if (enrollments.Count >= 500)
+                {
+                    break;
+                }
             }
         }
 
         context.Enrollments.AddRange(enrollments);
+        await context.SaveChangesAsync();
+    }
+
+    private static async Task SeedUsersAsync(LmsDbContext context)
+    {
+        if (await context.Users.AnyAsync())
+        {
+            return;
+        }
+
+        var users = new[]
+        {
+            new User
+            {
+                Username = "admin",
+                PasswordHash = HashPassword("123456"),
+                Role = "Admin"
+            },
+            new User
+            {
+                Username = "totntse",
+                PasswordHash = HashPassword("123456"),
+                Role = "Student"
+            }
+        };
+
+        context.Users.AddRange(users);
         await context.SaveChangesAsync();
     }
 
@@ -147,7 +184,6 @@ public static class DbInitializer
         }
         catch (SqlException ex) when (ex.Number == 4060)
         {
-            // Database chưa tồn tại (volume mới) — MigrateAsync sẽ tự tạo DB + schema
             await context.Database.MigrateAsync();
             return;
         }
@@ -160,12 +196,6 @@ public static class DbInitializer
         if (!await context.Database.CanConnectAsync())
         {
             await context.Database.MigrateAsync();
-            return;
-        }
-
-        if (await TableExistsAsync(context, "Student"))
-        {
-            await BaselineMigrationsAsync(context, pendingMigrations);
             return;
         }
 
@@ -231,4 +261,7 @@ public static class DbInitializer
                 """);
         }
     }
+
+    private static string HashPassword(string password) =>
+        BCrypt.Net.BCrypt.HashPassword(password);
 }

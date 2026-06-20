@@ -1,17 +1,29 @@
-using System;
+using System.ComponentModel.DataAnnotations;
 
 namespace PRN232.LMS.API.Models.Requests;
 
 public class SemesterCreateRequest
 {
+    [Required]
+    [StringLength(100, MinimumLength = 2)]
     public string SemesterName { get; set; } = string.Empty;
+
+    [Required]
     public DateTime StartDate { get; set; }
+
+    [Required]
     public DateTime EndDate { get; set; }
 }
 
 public class SemesterUpdateRequest
 {
+    [Required]
+    [StringLength(100, MinimumLength = 2)]
     public string SemesterName { get; set; } = string.Empty;
+
+    [Required]
     public DateTime StartDate { get; set; }
+
+    [Required]
     public DateTime EndDate { get; set; }
 }

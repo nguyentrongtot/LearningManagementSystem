@@ -147,6 +147,10 @@ namespace PRN232.LMS.Services.BLL
                 {
                     throw new ArgumentException("Email không đúng định dạng FPT (Ví dụ chuẩn: totntse181863@fpt.edu.vn)");
                 }
+                if (await _studentRepository.IsEmailExistAsync(studentUpdateRequest.Email))
+                {
+                    throw new ArgumentException("Email này đã tồn tại trong hệ thống. Vui lòng sử dụng email khác.");
+                }
                 studentEntity.FullName = studentUpdateRequest.FullName;
                 studentEntity.Email = studentUpdateRequest.Email;
                 studentEntity.DateOfBirth = studentUpdateRequest.DateOfBirth;
