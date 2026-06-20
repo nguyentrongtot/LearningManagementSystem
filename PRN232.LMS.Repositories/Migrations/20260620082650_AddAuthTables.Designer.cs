@@ -3,6 +3,7 @@ using System;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
 using Microsoft.EntityFrameworkCore.Metadata;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 using PRN232.LMS.Repositories.Data;
 
@@ -11,9 +12,11 @@ using PRN232.LMS.Repositories.Data;
 namespace PRN232.LMS.Repositories.Migrations
 {
     [DbContext(typeof(LmsDbContext))]
-    partial class LmsDbContextModelSnapshot : ModelSnapshot
+    [Migration("20260620082650_AddAuthTables")]
+    partial class AddAuthTables
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        /// <inheritdoc />
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder
@@ -82,42 +85,6 @@ namespace PRN232.LMS.Repositories.Migrations
                     b.HasIndex("StudentId");
 
                     b.ToTable("Enrollment", (string)null);
-                });
-
-            modelBuilder.Entity("PRN232.LMS.Repositories.Entities.RefreshToken", b =>
-                {
-                    b.Property<int>("TokenId")
-                        .ValueGeneratedOnAdd()
-                        .HasColumnType("int");
-
-                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("TokenId"));
-
-                    b.Property<DateTime>("ExpiresAt")
-                        .HasColumnType("datetime");
-
-                    b.Property<bool>("IsRevoked")
-                        .ValueGeneratedOnAdd()
-                        .HasColumnType("bit")
-                        .HasDefaultValue(false);
-
-                    b.Property<string>("Token")
-                        .IsRequired()
-                        .HasMaxLength(500)
-                        .IsUnicode(false)
-                        .HasColumnType("varchar(500)");
-
-                    b.Property<int>("UserId")
-                        .HasColumnType("int");
-
-                    b.HasKey("TokenId")
-                        .HasName("PK_RefreshToken");
-
-                    b.HasIndex("UserId");
-
-                    b.HasIndex(new[] { "Token" }, "UQ_RefreshToken_Token")
-                        .IsUnique();
-
-                    b.ToTable("RefreshToken", (string)null);
                 });
 
             modelBuilder.Entity("PRN232.LMS.Repositories.Entities.Semester", b =>
@@ -207,41 +174,6 @@ namespace PRN232.LMS.Repositories.Migrations
                     b.ToTable("Subject", (string)null);
                 });
 
-            modelBuilder.Entity("PRN232.LMS.Repositories.Entities.User", b =>
-                {
-                    b.Property<int>("UserId")
-                        .ValueGeneratedOnAdd()
-                        .HasColumnType("int");
-
-                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("UserId"));
-
-                    b.Property<string>("PasswordHash")
-                        .IsRequired()
-                        .HasMaxLength(255)
-                        .IsUnicode(false)
-                        .HasColumnType("varchar(255)");
-
-                    b.Property<string>("Role")
-                        .IsRequired()
-                        .HasMaxLength(20)
-                        .IsUnicode(false)
-                        .HasColumnType("varchar(20)");
-
-                    b.Property<string>("Username")
-                        .IsRequired()
-                        .HasMaxLength(50)
-                        .IsUnicode(false)
-                        .HasColumnType("varchar(50)");
-
-                    b.HasKey("UserId")
-                        .HasName("PK_User");
-
-                    b.HasIndex(new[] { "Username" }, "UQ_User_Username")
-                        .IsUnique();
-
-                    b.ToTable("User", (string)null);
-                });
-
             modelBuilder.Entity("PRN232.LMS.Repositories.Entities.Course", b =>
                 {
                     b.HasOne("PRN232.LMS.Repositories.Entities.Semester", "Semester")
@@ -280,18 +212,6 @@ namespace PRN232.LMS.Repositories.Migrations
                     b.Navigation("Student");
                 });
 
-            modelBuilder.Entity("PRN232.LMS.Repositories.Entities.RefreshToken", b =>
-                {
-                    b.HasOne("PRN232.LMS.Repositories.Entities.User", "User")
-                        .WithMany("RefreshTokens")
-                        .HasForeignKey("UserId")
-                        .OnDelete(DeleteBehavior.Cascade)
-                        .IsRequired()
-                        .HasConstraintName("FK_RefreshToken_User");
-
-                    b.Navigation("User");
-                });
-
             modelBuilder.Entity("PRN232.LMS.Repositories.Entities.Course", b =>
                 {
                     b.Navigation("Enrollments");
@@ -310,11 +230,6 @@ namespace PRN232.LMS.Repositories.Migrations
             modelBuilder.Entity("PRN232.LMS.Repositories.Entities.Subject", b =>
                 {
                     b.Navigation("Courses");
-                });
-
-            modelBuilder.Entity("PRN232.LMS.Repositories.Entities.User", b =>
-                {
-                    b.Navigation("RefreshTokens");
                 });
 #pragma warning restore 612, 618
         }

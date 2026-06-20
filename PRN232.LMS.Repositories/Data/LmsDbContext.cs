@@ -26,9 +26,64 @@ public partial class LmsDbContext : DbContext
 
     public virtual DbSet<Subject> Subjects { get; set; }
 
-   
+    public virtual DbSet<User> Users { get; set; }
+    public virtual DbSet<RefreshToken> RefreshTokens { get; set; }
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
+        modelBuilder.Entity<User>(entity =>
+        {
+            entity.HasKey(e => e.UserId)
+                .HasName("PK_User");
+
+            entity.ToTable("User");
+
+            // Username: varchar(50), unique
+            entity.HasIndex(e => e.Username, "UQ_User_Username")
+                .IsUnique();
+
+            entity.Property(e => e.Username)
+                .HasMaxLength(50)
+                .IsUnicode(false);          // varchar
+
+            // PasswordHash: varchar(255)
+            entity.Property(e => e.PasswordHash)
+                .HasMaxLength(255)
+                .IsUnicode(false);
+
+            // Role: varchar(20) — vd: "Admin", "Student"
+            entity.Property(e => e.Role)
+                .HasMaxLength(20)
+                .IsUnicode(false);
+        });
+
+        modelBuilder.Entity<RefreshToken>(entity =>
+        {
+            entity.HasKey(e => e.TokenId)
+                .HasName("PK_RefreshToken");
+
+            entity.ToTable("RefreshToken");
+
+            entity.Property(e => e.Token)
+                .HasMaxLength(500)
+                .IsUnicode(false);
+
+            entity.Property(e => e.ExpiresAt)
+                .HasColumnType("datetime");
+
+            entity.Property(e => e.IsRevoked)
+                .HasDefaultValue(false);
+
+            // Mỗi token nên unique để tra cứu refresh
+            entity.HasIndex(e => e.Token, "UQ_RefreshToken_Token")
+                .IsUnique();
+
+            // FK: RefreshToken -> User
+            entity.HasOne(d => d.User)
+                .WithMany(p => p.RefreshTokens)
+                .HasForeignKey(d => d.UserId)
+                .OnDelete(DeleteBehavior.Cascade)   // xóa user thì xóa token
+                .HasConstraintName("FK_RefreshToken_User");
+        });
         modelBuilder.Entity<Course>(entity =>
         {
             entity.HasKey(e => e.CourseId).HasName("PK__Course__C92D71A78496457E");

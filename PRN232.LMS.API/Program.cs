@@ -1,10 +1,20 @@
 
-using Microsoft.EntityFrameworkCore;
 using System.Reflection;
-using PRN232.LMS.Repositories.Data;
+using System.Text;
+using FluentValidation;
+using FluentValidation.AspNetCore;
+using Microsoft.AspNetCore.Authentication.JwtBearer;
+using Microsoft.AspNetCore.Mvc;
+using Microsoft.EntityFrameworkCore;
+using Microsoft.IdentityModel.Tokens;
+using PRN232.LMS.API.Models.Responses;
+using PRN232.LMS.API.Validators;
 using PRN232.LMS.Repositories.DAL;
+using PRN232.LMS.Repositories.Data;
 using PRN232.LMS.Repositories.Interfaces;
 using PRN232.LMS.Services.BLL;
+using PRN232.LMS.Services.Business;
+using PRN232.LMS.Services.Helpers;
 using PRN232.LMS.Services.Interfaces;
 
 namespace PRN232.LMS.API
@@ -17,7 +27,27 @@ namespace PRN232.LMS.API
 
             // Add services to the container.
 
-            builder.Services.AddControllers();
+            builder.Services.AddControllers()
+                .ConfigureApiBehaviorOptions(options =>
+                {
+                    options.InvalidModelStateResponseFactory = context =>
+                    {
+                        var errors = context.ModelState
+                            .Where(entry => entry.Value?.Errors.Count > 0)
+                            .SelectMany(entry => entry.Value!.Errors.Select(error => error.ErrorMessage))
+                            .ToList();
+
+                        return new BadRequestObjectResult(new ApiErrorResponse
+                        {
+                            Success = false,
+                            Message = "Validation failed",
+                            Errors = errors
+                        });
+                    };
+                });
+
+            builder.Services.AddFluentValidationAutoValidation();
+            builder.Services.AddValidatorsFromAssemblyContaining<LoginRequestValidator>();
             // Learn more about configuring Swagger/OpenAPI at https://aka.ms/aspnetcore/swashbuckle
             builder.Services.AddEndpointsApiExplorer();
             builder.Services.AddSwaggerGen(options =>
@@ -45,6 +75,34 @@ namespace PRN232.LMS.API
             builder.Services.AddScoped<IEnrollmentRepository, EnrollmentRepository>();
             builder.Services.AddScoped<IEnrollmentService, EnrollmentService>();
 
+            builder.Services.AddScoped<IUserRepository, UserRepository>();
+            builder.Services.AddScoped<IRefreshTokenRepository, RefreshTokenRepository>();
+            builder.Services.AddScoped<IAuthService, AuthService>();
+
+            var jwtSettings = builder.Configuration.GetSection("Jwt").Get<JwtSettings>()
+                ?? throw new InvalidOperationException("Jwt settings are missing.");
+            builder.Services.AddSingleton(jwtSettings);
+            builder.Services.AddSingleton<IJwtTokenGenerator, JwtTokenGenerator>();
+
+            builder.Services.AddAuthentication(options =>
+            {
+                options.DefaultAuthenticateScheme = JwtBearerDefaults.AuthenticationScheme;
+                options.DefaultChallengeScheme = JwtBearerDefaults.AuthenticationScheme;
+            })
+            .AddJwtBearer(options =>
+            {
+                options.TokenValidationParameters = new TokenValidationParameters
+                {
+                    ValidateIssuer = true,
+                    ValidateAudience = true,
+                    ValidateLifetime = true,
+                    ValidateIssuerSigningKey = true,
+                    ValidIssuer = jwtSettings.Issuer,
+                    ValidAudience = jwtSettings.Audience,
+                    IssuerSigningKey = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(jwtSettings.Secret))
+                };
+            });
+
             builder.Services.AddDbContext<LmsDbContext>(options =>
                 options.UseSqlServer(builder.Configuration.GetConnectionString("DefaultConnection")));
             var app = builder.Build();
@@ -61,6 +119,7 @@ namespace PRN232.LMS.API
             // Configure the HTTP request pipeline.
 
 
+            app.UseAuthentication();
             app.UseAuthorization();
 
 

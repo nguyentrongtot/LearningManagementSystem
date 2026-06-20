@@ -26,4 +26,16 @@ public static class ApiResponseFactory
             }
         };
     }
+
+    public static ApiResponse<T> Success<T>(T data, string message = "Request processed successfully")
+    {
+        return new ApiResponse<T>
+        {
+            Success = true,
+            Message = message,
+            Data = data,
+            Errors = null,
+            Pagination = null
+        };
+    }
 }
